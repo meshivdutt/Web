@@ -1,0 +1,53 @@
+-- Create a table to store employee information
+CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    EmployeeName VARCHAR(100),
+    Department VARCHAR(100)
+);
+
+-- Create a table to store attendance records
+CREATE TABLE Attendance (
+    AttendanceID INT PRIMARY KEY,
+    EmployeeID INT,
+    AttendanceDate DATE,
+    Present BIT -- 1 for present, 0 for absent
+);
+
+-- Stored procedure to add employees
+CREATE PROCEDURE AddEmployee
+    @EmployeeID INT,
+    @EmployeeName VARCHAR(100),
+    @Department VARCHAR(100)
+AS
+BEGIN
+    INSERT INTO Employees (EmployeeID, EmployeeName, Department)
+    VALUES (@EmployeeID, @EmployeeName, @Department);
+END;
+
+-- Stored procedure to add attendance
+CREATE PROCEDURE AddAttendance
+    @EmployeeID INT,
+    @AttendanceDate DATE,
+    @Present BIT
+AS
+BEGIN
+    INSERT INTO Attendance (EmployeeID, AttendanceDate, Present)
+    VALUES (@EmployeeID, @AttendanceDate, @Present);
+END;
+
+-- View to get the count of days present for each employee in a month
+CREATE VIEW EmployeeAttendanceCount AS
+SELECT 
+    e.EmployeeID,
+    e.EmployeeName,
+    COUNT(a.Present) AS DaysPresent
+FROM 
+    Employees e
+LEFT JOIN 
+    Attendance a ON e.EmployeeID = a.EmployeeID
+WHERE 
+    MONTH(a.AttendanceDate) = MONTH(GETDATE()) -- Assuming current month
+    AND YEAR(a.AttendanceDate) = YEAR(GETDATE()) -- Assuming current year
+    AND a.Present = 1 -- Assuming 1 represents present
+GROUP BY 
+    e.EmployeeID, e.EmployeeName;
